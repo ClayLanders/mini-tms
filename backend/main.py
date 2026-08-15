@@ -1052,6 +1052,177 @@ def update_load(
 
     return {"message": "Load updated successfully"}
 
+# COVER / ASSIGN CARRIER
+
+@app.post("/loads/{load_number}/cover")
+def cover_load(
+    load_number: str,
+    carrier_id: int = Body(..., embed=True),
+    carrier_rate: float = Body(..., embed=True)
+):
+
+    conn = sqlite3.connect("mini_tms.db")
+    c = conn.cursor()
+
+    # Verify load exists
+    c.execute("""
+    SELECT
+        carrier_id,
+        status
+    FROM loads
+    WHERE load_number = ?
+    """, (load_number,))
+
+    load = c.fetchone()
+
+    if not load:
+        conn.close()
+
+        return {
+            "message": "Load not found"
+        }
+
+    current_carrier_id = load[0]
+    current_status = load[1]
+
+    # Cannot cover a load that is already covered
+    if current_carrier_id is not None:
+        conn.close()
+
+        return {
+            "message": "Load already has a carrier assigned"
+        }
+
+    # Cannot cover a closed or cancelled load
+    if current_status in ["Closed", "Cancelled"]:
+        conn.close()
+
+        return {
+            "message": f"Cannot cover a {current_status.lower()} load"
+        }
+
+    # Validate carrier rate
+    if carrier_rate < 0:
+        conn.close()
+
+        return {
+            "message": "Carrier rate cannot be negative"
+        }
+
+    # Verify carrier exists
+    c.execute("""
+    SELECT id
+    FROM carriers
+    WHERE id = ?
+    """, (carrier_id,))
+
+    carrier = c.fetchone()
+
+    if not carrier:
+        conn.close()
+
+        return {
+            "message": "Carrier not found"
+        }
+
+    # Assign carrier and update status
+    c.execute("""
+    UPDATE loads
+
+    SET
+        carrier_id = ?,
+        carrier_rate = ?,
+        carrier_assigned_at = CURRENT_TIMESTAMP,
+        status = 'Covered',
+        updated_at = CURRENT_TIMESTAMP
+
+    WHERE load_number = ?
+    """, (
+        carrier_id,
+        carrier_rate,
+        load_number
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "message": "Load covered successfully"
+    }
+
+# BOUNCE / REMOVE CARRIER
+
+@app.post("/loads/{load_number}/bounce")
+def bounce_load(load_number: str):
+
+    conn = sqlite3.connect("mini_tms.db")
+    c = conn.cursor()
+
+    # Get current load state
+    c.execute("""
+    SELECT
+        carrier_id,
+        status
+    FROM loads
+    WHERE load_number = ?
+    """, (load_number,))
+
+    load = c.fetchone()
+
+    if not load:
+        conn.close()
+
+        return {
+            "message": "Load not found"
+        }
+
+    current_carrier_id = load[0]
+    current_status = load[1]
+
+    # Verify a carrier is assigned
+    if current_carrier_id is None:
+        conn.close()
+
+        return {
+            "message": "Load does not have a carrier assigned"
+        }
+
+    # Delivered, Closed, and Cancelled loads are locked
+    if current_status in [
+        "Delivered",
+        "Closed",
+        "Cancelled"
+    ]:
+        conn.close()
+
+        return {
+            "message": f"Cannot bounce a {current_status.lower()} load"
+        }
+
+    # Clear current carrier and operational timestamps
+    c.execute("""
+    UPDATE loads
+
+    SET
+        carrier_id = NULL,
+        carrier_assigned_at = NULL,
+        dispatched_at = NULL,
+        pickup_arrived_at = NULL,
+        pickup_departed_at = NULL,
+        delivery_arrived_at = NULL,
+        status = 'Open',
+        updated_at = CURRENT_TIMESTAMP
+
+    WHERE load_number = ?
+    """, (load_number,))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "message": "Carrier removed and load reopened successfully"
+    }
+
 #DELETE LOAD
 
 @app.delete("/loads/{load_number}")

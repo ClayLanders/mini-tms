@@ -11,6 +11,7 @@ let customers = [];
 let carriers = [];
 
 let editMode = false;
+let coverMode = false;
 
 initializePage();
 
@@ -21,6 +22,13 @@ document
     .addEventListener(
         "click",
         toggleEditMode
+    );
+
+document
+    .getElementById("cover-button")
+    .addEventListener(
+        "click",
+        toggleCoverMode
     );
 
 document
@@ -76,13 +84,38 @@ async function loadLoadDetails() {
     currentLoad =
         await response.json();
 
+    updateCoverButton();
+
     renderCurrentMode();
+
+}
+
+function updateCoverButton() {
+
+    const button =
+        document.getElementById("cover-button");
+
+    if (currentLoad[3] === null) {
+
+        button.innerText = "Cover Load";
+
+    } else {
+
+        button.innerText = "Bounce Carrier";
+
+    }
 
 }
 
 function renderCurrentMode() {
 
-    if (editMode) {
+    if (coverMode) {
+
+        renderCoverMode();
+
+    }
+
+    else if (editMode) {
 
         renderEditMode();
 
@@ -247,6 +280,252 @@ function renderViewMode() {
             <p>
                 <strong>Carrier Rate:</strong>
                 $${Number(load[19]).toLocaleString()}
+            </p>
+
+            <p>
+                <strong>Gross Margin:</strong>
+                $${Number(grossMargin).toLocaleString()}
+            </p>
+
+        </div>
+
+
+        <div class="detail-grid">
+
+            <div class="detail-card">
+
+                <h2>Pickup</h2>
+
+                <p>
+                    ${load[8]}
+                </p>
+
+                <p>
+                    ${load[9]}, ${load[10]} ${load[11]}
+                </p>
+
+                <p>
+                    <strong>Scheduled:</strong>
+                    ${load[16]}
+                </p>
+
+                <p>
+                    <strong>Arrived:</strong>
+                    ${formatDateTime(load[32])}
+                </p>
+
+                <p>
+                    <strong>Departed:</strong>
+                    ${formatDateTime(load[33])}
+                </p>
+
+            </div>
+
+
+            <div class="detail-card">
+
+                <h2>Delivery</h2>
+
+                <p>
+                    ${load[12]}
+                </p>
+
+                <p>
+                    ${load[13]}, ${load[14]} ${load[15]}
+                </p>
+
+                <p>
+                    <strong>Scheduled:</strong>
+                    ${load[17]}
+                </p>
+
+                <p>
+                    <strong>Arrived:</strong>
+                    ${formatDateTime(load[34])}
+                </p>
+
+                <p>
+                    <strong>Delivered:</strong>
+                    ${formatDateTime(load[35])}
+                </p>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+function renderCoverMode() {
+
+    const load =
+        currentLoad;
+
+    const grossMargin =
+        load[18] - load[19];
+
+
+    const carrierOptions =
+
+        `<option value="">
+            -- Select Carrier --
+        </option>`
+
+        +
+
+        carriers.map(carrier =>
+
+            `<option
+                value="${carrier[0]}"
+                ${carrier[0] == load[3] ? "selected" : ""}
+            >
+                ${carrier[1]}
+            </option>`
+
+        ).join("");
+
+
+    document.getElementById(
+        "load-title"
+    ).innerText =
+        `Load ${load[1]}`;
+
+
+    function formatDateTime(value) {
+
+        if (!value) {
+            return "-";
+        }
+
+        return new Date(value).toLocaleString();
+
+    }
+
+
+    document.getElementById(
+        "load-details"
+    ).innerHTML = `
+
+        <div class="detail-card">
+
+            <h2>General Information</h2>
+
+            <p>
+                <strong>Load Number:</strong>
+                ${load[1]}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                ${load[20]}
+            </p>
+
+            <p>
+                <strong>Customer:</strong>
+                ${load[5]}
+            </p>
+
+            <p>
+                <strong>Carrier:</strong>
+
+                <select id="cover-carrier-id">
+
+                    ${carrierOptions}
+
+                </select>
+
+            </p>
+
+            <p>
+                <strong>Created By:</strong>
+                ${load[7]}
+            </p>
+
+        </div>
+
+
+        <div class="detail-card">
+
+            <h2>Shipment Details</h2>
+
+            <div class="detail-grid">
+
+                <div>
+
+                    <p>
+                        <strong>Equipment:</strong>
+                        ${load[23] ?? "-"}
+                    </p>
+
+                    <p>
+                        <strong>Commodity:</strong>
+                        ${load[24] ?? "-"}
+                    </p>
+
+                    <p>
+                        <strong>Weight:</strong>
+                        ${load[25] != null
+            ? `${Number(load[25]).toLocaleString()} lbs`
+            : "-"
+        }
+                    </p>
+
+                    <p>
+                        <strong>Pieces:</strong>
+                        ${load[26] ?? "-"}
+                    </p>
+
+                </div>
+
+                <div>
+
+                    <p>
+                        <strong>Length:</strong>
+                        ${load[27] != null
+            ? `${load[27]} ft`
+            : "-"
+        }
+                    </p>
+
+                    <p>
+                        <strong>Hazmat:</strong>
+                        ${load[28] ? "Yes" : "No"}
+                    </p>
+
+                    <p>
+                        <strong>Declared Value:</strong>
+                        ${load[29] != null
+            ? `$${Number(load[29]).toLocaleString()}`
+            : "-"
+        }
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="detail-card">
+
+            <h2>Financials</h2>
+
+            <p>
+                <strong>Customer Rate:</strong>
+                $${Number(load[18]).toLocaleString()}
+            </p>
+
+            <p>
+                <strong>Carrier Rate:</strong>
+
+                <input
+                    type="number"
+                    id="cover-carrier-rate"
+                    value="${load[19] ?? ""}"
+                >
+
             </p>
 
             <p>
@@ -595,6 +874,7 @@ async function toggleEditMode() {
 function cancelEditMode() {
 
     editMode = false;
+    coverMode = false;
 
     document.getElementById(
         "edit-button"
@@ -602,11 +882,184 @@ function cancelEditMode() {
         "Edit";
 
     document.getElementById(
+        "cover-button"
+    ).innerText =
+        currentLoad[3] === null
+            ? "Cover Load"
+            : "Bounce Carrier";
+
+    document.getElementById(
         "cancel-button"
     ).style.display =
         "none";
 
     renderCurrentMode();
+
+}
+
+async function toggleCoverMode() {
+
+    if (!coverMode) {
+
+        if (currentLoad[3] === null) {
+
+            coverMode = true;
+
+            document.getElementById(
+                "cover-button"
+            ).innerText = "Save Cover";
+
+            document.getElementById(
+                "cancel-button"
+            ).style.display = "inline-block";
+
+            renderCurrentMode();
+
+        }
+
+        else {
+
+            const confirmed =
+                confirm(
+                    "Bounce Carrier?\n\n" +
+                    "This will remove the current carrier " +
+                    "and reopen the load."
+                );
+
+            if (!confirmed) {
+
+                return;
+
+            }
+
+
+            const response =
+                await fetch(
+                    `${API_BASE_URL}/loads/${loadNumber}/bounce`,
+                    {
+                        method: "POST"
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                alert(
+                    result.message ||
+                    "Unable to bounce carrier."
+                );
+
+                return;
+
+            }
+
+
+            alert(
+                "Carrier bounced successfully."
+            );
+
+
+            await loadLoadDetails();
+
+        }
+
+        return;
+    }
+
+
+    await saveCover();
+
+}
+
+async function saveCover() {
+
+    const carrierId =
+        document.getElementById(
+            "cover-carrier-id"
+        ).value;
+
+    const carrierRate =
+        document.getElementById(
+            "cover-carrier-rate"
+        ).value;
+
+
+    if (!carrierId) {
+
+        alert("Please select a carrier.");
+
+        return;
+
+    }
+
+
+    if (carrierRate === "") {
+
+        alert("Please enter a carrier rate.");
+
+        return;
+
+    }
+
+
+    const response =
+        await fetch(
+            `${API_BASE_URL}/loads/${loadNumber}/cover`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    carrier_id:
+                        Number(carrierId),
+
+                    carrier_rate:
+                        Number(carrierRate)
+
+                })
+            }
+        );
+
+
+    const result =
+        await response.json();
+
+
+    if (!response.ok) {
+
+        alert(
+            result.message ||
+            "Unable to cover load."
+        );
+
+        return;
+
+    }
+
+
+    alert(
+        "Load covered successfully."
+    );
+
+
+    coverMode = false;
+
+    document.getElementById(
+        "cancel-button"
+    ).style.display =
+        "none";
+
+
+    await loadLoadDetails();
 
 }
 

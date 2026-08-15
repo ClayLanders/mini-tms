@@ -6,44 +6,41 @@ async function loadDashboard() {
 
     const loads = await response.json();
 
-    let openLoads = 0;
-    let coveredLoads = 0;
-    let inTransitLoads = 0;
-    let deliveredLoads = 0;
+    const statusCounts = {};
 
     loads.forEach(load => {
 
         const status = load[17];
 
-        if (status === "Open") {
-            openLoads++;
+        if (!statusCounts[status]) {
+            statusCounts[status] = 0;
         }
 
-        else if (status === "Booked") {
-            coveredLoads++;
-        }
-
-        else if (status === "In Transit") {
-            inTransitLoads++;
-        }
-
-        else if (status === "Delivered") {
-            deliveredLoads++;
-        }
+        statusCounts[status]++;
 
     });
 
     document.getElementById("open-loads").textContent =
-        openLoads;
+        statusCounts["Open"] || 0;
 
     document.getElementById("covered-loads").textContent =
-        coveredLoads;
+        statusCounts["Covered"] || 0;
+
+    document.getElementById("dispatched-loads").textContent =
+        statusCounts["Dispatched"] || 0;
+
+    document.getElementById("at-pickup-loads").textContent =
+        statusCounts["At Pickup"] || 0;
+
+    document.getElementById("loaded-loads").textContent =
+        statusCounts["Loaded"] || 0;
 
     document.getElementById("in-transit-loads").textContent =
-        inTransitLoads;
+        statusCounts["In Transit"] || 0;
 
-    document.getElementById("delivered-loads").textContent =
-        deliveredLoads;
+    document.getElementById("at-delivery-loads").textContent =
+        statusCounts["At Delivery"] || 0;
+
 }
 
 loadDashboard();

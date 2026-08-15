@@ -484,9 +484,15 @@ def delete_carrier(carrier_id: int):
 
 VALID_STATUSES = [
     "Open",
-    "Booked",
+    "Covered",
+    "Dispatched",
+    "At Pickup",
+    "Loaded",
     "In Transit",
-    "Delivered"
+    "At Delivery",
+    "Delivered",
+    "Closed",
+    "Cancelled"
 ]
 
 #GET ALL LOADS
@@ -500,49 +506,66 @@ def get_loads():
     c.execute("""
     SELECT
 
-        load.id,
-        load.load_number,
+    load.id,
+    load.load_number,
 
-        cust.name AS customer_name,
+    cust.name AS customer_name,
 
-        carr.name AS carrier_name,
+    carr.name AS carrier_name,
 
-        usr.first_name || ' ' || usr.last_name AS created_by,
+    usr.first_name || ' ' || usr.last_name AS created_by,
 
-        load.pu_address,
-        load.pu_city,
-        load.pu_state,
-        load.pu_zip,
+    load.pu_address,
+    load.pu_city,
+    load.pu_state,
+    load.pu_zip,
 
-        load.del_address,
-        load.del_city,
-        load.del_state,
-        load.del_zip,
+    load.del_address,
+    load.del_city,
+    load.del_state,
+    load.del_zip,
 
-        load.pickup_date,
-        load.delivery_date,
+    load.pickup_date,
+    load.delivery_date,
 
-        load.customer_rate,
-        load.carrier_rate,
+    load.customer_rate,
+    load.carrier_rate,
 
-        load.status,
+    load.status,
 
-        load.created_at,
-        load.updated_at
+    load.created_at,
+    load.updated_at,
 
-    FROM loads load
+    load.equipment_type,
+    load.commodity,
+    load.weight,
+    load.pieces,
+    load.length,
+    load.hazmat,
+    load.declared_value,
 
-    LEFT JOIN customers cust
-        ON load.customer_id = cust.id
+    load.carrier_assigned_at,
+    load.dispatched_at,
+    load.pickup_arrived_at,
+    load.pickup_departed_at,
+    load.delivery_arrived_at,
+    load.delivered_at,
+    load.closed_at,
+    load.cancelled_at
 
-    LEFT JOIN carriers carr
-        ON load.carrier_id = carr.id
+FROM loads load
 
-    LEFT JOIN users usr
-        ON load.created_by_user_id = usr.id
+LEFT JOIN customers cust
+    ON load.customer_id = cust.id
 
-    ORDER BY load.load_number
-    """)
+LEFT JOIN carriers carr
+    ON load.carrier_id = carr.id
+
+LEFT JOIN users usr
+    ON load.created_by_user_id = usr.id
+
+ORDER BY load.load_number
+""")
 
     loads = c.fetchall()
 
@@ -559,55 +582,72 @@ def get_load(load_number: str):
     c = conn.cursor()
 
     c.execute("""
-    SELECT
+SELECT
 
-        load.id,
-        load.load_number,
+    load.id,
+    load.load_number,
 
-        load.customer_id,
-        load.carrier_id,
-        load.created_by_user_id,
+    load.customer_id,
+    load.carrier_id,
+    load.created_by_user_id,
 
-        cust.name AS customer_name,
+    cust.name AS customer_name,
 
-        carr.name AS carrier_name,
+    carr.name AS carrier_name,
 
-        usr.first_name || ' ' || usr.last_name AS created_by,
+    usr.first_name || ' ' || usr.last_name AS created_by,
 
-        load.pu_address,
-        load.pu_city,
-        load.pu_state,
-        load.pu_zip,
+    load.pu_address,
+    load.pu_city,
+    load.pu_state,
+    load.pu_zip,
 
-        load.del_address,
-        load.del_city,
-        load.del_state,
-        load.del_zip,
+    load.del_address,
+    load.del_city,
+    load.del_state,
+    load.del_zip,
 
-        load.pickup_date,
-        load.delivery_date,
+    load.pickup_date,
+    load.delivery_date,
 
-        load.customer_rate,
-        load.carrier_rate,
+    load.customer_rate,
+    load.carrier_rate,
 
-        load.status,
+    load.status,
 
-        load.created_at,
-        load.updated_at
+    load.created_at,
+    load.updated_at,
 
-    FROM loads load
+    load.equipment_type,
+    load.commodity,
+    load.weight,
+    load.pieces,
+    load.length,
+    load.hazmat,
+    load.declared_value,
 
-    LEFT JOIN customers cust
-        ON load.customer_id = cust.id
+    load.carrier_assigned_at,
+    load.dispatched_at,
+    load.pickup_arrived_at,
+    load.pickup_departed_at,
+    load.delivery_arrived_at,
+    load.delivered_at,
+    load.closed_at,
+    load.cancelled_at
 
-    LEFT JOIN carriers carr
-        ON load.carrier_id = carr.id
+FROM loads load
 
-    LEFT JOIN users usr
-        ON load.created_by_user_id = usr.id
+LEFT JOIN customers cust
+    ON load.customer_id = cust.id
 
-    WHERE load.load_number = ?
-    """, (load_number,))
+LEFT JOIN carriers carr
+    ON load.carrier_id = carr.id
+
+LEFT JOIN users usr
+    ON load.created_by_user_id = usr.id
+
+WHERE load.load_number = ?
+""", (load_number,))
 
     load_record = c.fetchone()
 

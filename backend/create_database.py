@@ -95,8 +95,25 @@ CREATE TABLE IF NOT EXISTS loads (
     pickup_date TEXT,
     delivery_date TEXT,
 
+    equipment_type TEXT,
+    commodity TEXT,
+    weight REAL,
+    pieces INTEGER,
+    length REAL,
+    hazmat INTEGER DEFAULT 0,
+    declared_value REAL,
+
     customer_rate REAL,
     carrier_rate REAL,
+
+    carrier_assigned_at TEXT,
+    dispatched_at TEXT,
+    pickup_arrived_at TEXT,
+    pickup_departed_at TEXT,
+    delivery_arrived_at TEXT,
+    delivered_at TEXT,
+    closed_at TEXT,
+    cancelled_at TEXT,
 
     status TEXT NOT NULL DEFAULT 'Open',
 

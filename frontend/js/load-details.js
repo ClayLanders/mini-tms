@@ -109,6 +109,33 @@ function renderViewMode() {
     ).innerText =
         `Load ${load[1]}`;
 
+    function formatDateTime(value) {
+
+        if (!value) {
+            return "-";
+        }
+
+        return new Date(value).toLocaleString();
+
+    }
+
+    function lifecycleItem(label, timestamp, completed = false) {
+
+        return `
+            <div class="lifecycle-item">
+                <span class="lifecycle-status">
+                    ${completed ? "✓" : "○"}
+                </span>
+
+                <div>
+                    <strong>${label}</strong>
+                    <div>${formatDateTime(timestamp)}</div>
+                </div>
+            </div>
+        `;
+
+    }
+
     document.getElementById(
         "load-details"
     ).innerHTML = `
@@ -117,23 +144,118 @@ function renderViewMode() {
 
             <h2>General Information</h2>
 
-            <p><strong>Load Number:</strong> ${load[1]}</p>
-            <p><strong>Status:</strong> ${load[20]}</p>
-            <p><strong>Customer:</strong> ${load[5]}</p>
-            <p><strong>Carrier:</strong> ${load[6] ?? "-"}</p>
-            <p><strong>Created By:</strong> ${load[7]}</p>
+            <p>
+                <strong>Load Number:</strong>
+                ${load[1]}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                ${load[20]}
+            </p>
+
+            <p>
+                <strong>Customer:</strong>
+                ${load[5]}
+            </p>
+
+            <p>
+                <strong>Carrier:</strong>
+                ${load[6] ?? "-"}
+            </p>
+
+            <p>
+                <strong>Created By:</strong>
+                ${load[7]}
+            </p>
 
         </div>
+
+
+        <div class="detail-card">
+
+            <h2>Shipment Details</h2>
+
+            <div class="detail-grid">
+
+                <div>
+
+                    <p>
+                        <strong>Equipment:</strong>
+                        ${load[23] ?? "-"}
+                    </p>
+
+                    <p>
+                        <strong>Commodity:</strong>
+                        ${load[24] ?? "-"}
+                    </p>
+
+                    <p>
+                        <strong>Weight:</strong>
+                        ${load[25] != null
+            ? `${Number(load[25]).toLocaleString()} lbs`
+            : "-"
+        }
+                    </p>
+
+                    <p>
+                        <strong>Pieces:</strong>
+                        ${load[26] ?? "-"}
+                    </p>
+
+                </div>
+
+                <div>
+
+                    <p>
+                        <strong>Length:</strong>
+                        ${load[27] != null
+            ? `${load[27]} ft`
+            : "-"
+        }
+                    </p>
+
+                    <p>
+                        <strong>Hazmat:</strong>
+                        ${load[28] ? "Yes" : "No"}
+                    </p>
+
+                    <p>
+                        <strong>Declared Value:</strong>
+                        ${load[29] != null
+            ? `$${Number(load[29]).toLocaleString()}`
+            : "-"
+        }
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
 
         <div class="detail-card">
 
             <h2>Financials</h2>
 
-            <p><strong>Customer Rate:</strong> $${load[18]}</p>
-            <p><strong>Carrier Rate:</strong> $${load[19]}</p>
-            <p><strong>Gross Margin:</strong> $${grossMargin}</p>
+            <p>
+                <strong>Customer Rate:</strong>
+                $${Number(load[18]).toLocaleString()}
+            </p>
+
+            <p>
+                <strong>Carrier Rate:</strong>
+                $${Number(load[19]).toLocaleString()}
+            </p>
+
+            <p>
+                <strong>Gross Margin:</strong>
+                $${Number(grossMargin).toLocaleString()}
+            </p>
 
         </div>
+
 
         <div class="detail-grid">
 
@@ -141,29 +263,60 @@ function renderViewMode() {
 
                 <h2>Pickup</h2>
 
-                <p>${load[8]}</p>
-                <p>${load[9]}, ${load[10]} ${load[11]}</p>
-                <p>${load[16]}</p>
+                <p>
+                    ${load[8]}
+                </p>
+
+                <p>
+                    ${load[9]}, ${load[10]} ${load[11]}
+                </p>
+
+                <p>
+                    <strong>Scheduled:</strong>
+                    ${load[16]}
+                </p>
+
+                <p>
+                    <strong>Arrived:</strong>
+                    ${formatDateTime(load[32])}
+                </p>
+
+                <p>
+                    <strong>Departed:</strong>
+                    ${formatDateTime(load[33])}
+                </p>
 
             </div>
+
 
             <div class="detail-card">
 
                 <h2>Delivery</h2>
 
-                <p>${load[12]}</p>
-                <p>${load[13]}, ${load[14]} ${load[15]}</p>
-                <p>${load[17]}</p>
+                <p>
+                    ${load[12]}
+                </p>
+
+                <p>
+                    ${load[13]}, ${load[14]} ${load[15]}
+                </p>
+
+                <p>
+                    <strong>Scheduled:</strong>
+                    ${load[17]}
+                </p>
+
+                <p>
+                    <strong>Arrived:</strong>
+                    ${formatDateTime(load[34])}
+                </p>
+
+                <p>
+                    <strong>Delivered:</strong>
+                    ${formatDateTime(load[35])}
+                </p>
 
             </div>
-
-        </div>
-
-        <div class="detail-card">
-
-            <h2>History</h2>
-
-            <p>History coming soon...</p>
 
         </div>
 

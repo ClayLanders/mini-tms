@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 # Connect to database
 conn = sqlite3.connect("mini_tms.db")
@@ -94,9 +94,34 @@ loads = []
 
 statuses = [
     "Open",
-    "Booked",
+    "Covered",
+    "Dispatched",
+    "At Pickup",
+    "Loaded",
     "In Transit",
-    "Delivered"
+    "At Delivery",
+    "Delivered",
+    "Closed",
+    "Cancelled"
+]
+
+equipment_types = [
+    "Dry Van",
+    "Reefer",
+    "Flatbed",
+    "Dry Van",
+    "Reefer"
+]
+
+commodities = [
+    "Building Materials",
+    "Lumber",
+    "Frozen Food",
+    "Plastic Products",
+    "Paper Products",
+    "Roofing Materials",
+    "Packaging Materials",
+    "Industrial Equipment"
 ]
 
 pickup_cities = [
@@ -121,6 +146,9 @@ delivery_cities = [
     ("Houston", "TX")
 ]
 
+# Base timestamp used to create realistic lifecycle events
+base_time = datetime.now()
+
 for i in range(25):
 
     load_number = f"L{1001 + i}"
@@ -129,8 +157,9 @@ for i in range(25):
 
     created_by_user_id = (i % 5) + 1
 
-    status = statuses[i % 4]
+    status = statuses[i % 10]
 
+    # Open loads do not have a carrier yet.
     if status == "Open":
         carrier_id = None
     else:
@@ -158,6 +187,109 @@ for i in range(25):
 
     carrier_rate = customer_rate - 400
 
+    # -----------------------------
+    # SHIPMENT DETAILS
+    # -----------------------------
+
+    equipment_type = equipment_types[i % len(equipment_types)]
+
+    commodity = commodities[i % len(commodities)]
+
+    weight = 18000 + (i * 750)
+
+    pieces = 20 + (i % 8) * 5
+
+    length = 48 if equipment_type == "Flatbed" else 53
+
+    # Every 7th load is hazmat for demonstration purposes.
+    hazmat = 1 if i % 7 == 0 else 0
+
+    declared_value = 25000 + (i * 2500)
+
+    # -----------------------------
+    # LIFECYCLE TIMESTAMPS
+    # -----------------------------
+
+    carrier_assigned_at = None
+    dispatched_at = None
+    pickup_arrived_at = None
+    pickup_departed_at = None
+    delivery_arrived_at = None
+    delivered_at = None
+    closed_at = None
+    cancelled_at = None
+
+    # Create a timeline for the load.
+    load_base_time = base_time - timedelta(days=(25 - i))
+
+    if status != "Open":
+        carrier_assigned_at = (
+            load_base_time
+        ).isoformat(timespec="seconds")
+
+    if status in [
+        "Dispatched",
+        "At Pickup",
+        "Loaded",
+        "In Transit",
+        "At Delivery",
+        "Delivered",
+        "Closed"
+    ]:
+        dispatched_at = (
+            load_base_time + timedelta(hours=2)
+        ).isoformat(timespec="seconds")
+
+    if status in [
+        "At Pickup",
+        "Loaded",
+        "In Transit",
+        "At Delivery",
+        "Delivered",
+        "Closed"
+    ]:
+        pickup_arrived_at = (
+            load_base_time + timedelta(hours=8)
+        ).isoformat(timespec="seconds")
+
+    if status in [
+        "Loaded",
+        "In Transit",
+        "At Delivery",
+        "Delivered",
+        "Closed"
+    ]:
+        pickup_departed_at = (
+            load_base_time + timedelta(hours=10)
+        ).isoformat(timespec="seconds")
+
+    if status in [
+        "At Delivery",
+        "Delivered",
+        "Closed"
+    ]:
+        delivery_arrived_at = (
+            load_base_time + timedelta(hours=30)
+        ).isoformat(timespec="seconds")
+
+    if status in [
+        "Delivered",
+        "Closed"
+    ]:
+        delivered_at = (
+            load_base_time + timedelta(hours=32)
+        ).isoformat(timespec="seconds")
+
+    if status == "Closed":
+        closed_at = (
+            load_base_time + timedelta(hours=36)
+        ).isoformat(timespec="seconds")
+
+    if status == "Cancelled":
+        cancelled_at = (
+            load_base_time + timedelta(hours=4)
+        ).isoformat(timespec="seconds")
+
     loads.append(
         (
             load_number,
@@ -178,8 +310,25 @@ for i in range(25):
             pickup_date,
             delivery_date,
 
+            equipment_type,
+            commodity,
+            weight,
+            pieces,
+            length,
+            hazmat,
+            declared_value,
+
             customer_rate,
             carrier_rate,
+
+            carrier_assigned_at,
+            dispatched_at,
+            pickup_arrived_at,
+            pickup_departed_at,
+            delivery_arrived_at,
+            delivered_at,
+            closed_at,
+            cancelled_at,
 
             status
         )
@@ -205,12 +354,38 @@ INSERT INTO loads (
     pickup_date,
     delivery_date,
 
+    equipment_type,
+    commodity,
+    weight,
+    pieces,
+    length,
+    hazmat,
+    declared_value,
+
     customer_rate,
     carrier_rate,
 
+    carrier_assigned_at,
+    dispatched_at,
+    pickup_arrived_at,
+    pickup_departed_at,
+    delivery_arrived_at,
+    delivered_at,
+    closed_at,
+    cancelled_at,
+
     status
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (
+    ?, ?, ?, ?,
+    ?, ?, ?, ?,
+    ?, ?, ?, ?,
+    ?, ?,
+    ?, ?, ?, ?, ?, ?, ?,
+    ?, ?,
+    ?, ?, ?, ?, ?, ?, ?, ?,
+    ?
+)
 """, loads)
 
 conn.commit()
